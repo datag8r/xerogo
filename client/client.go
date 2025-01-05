@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/VirtualHelperUK/xerogo/auth"
+	"github.com/datag8r/xerogo/auth"
 )
 
 type client struct {
@@ -46,6 +46,9 @@ func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState strin
 	if state != expectedState {
 		return auth.ErrMisMatchedState
 	}
+	if code == "" {
+		return auth.ErrInvalidInput
+	}
 	identityToken, accessToken, refreshToken, err := auth.ExchangeCode(code, c.clientID, c.clientSecret, c.redirectURI)
 	if err != nil {
 		return
@@ -70,6 +73,10 @@ func (c *client) RefreshTokens() (err error) {
 	c.refreshToken = refreshToken
 	c.lastRefresh = time.Now()
 	return
+}
+
+func (c *client) Debug() string {
+	return fmt.Sprintf("%+v", c)
 }
 
 // func (c client) requiresRefresh() bool {

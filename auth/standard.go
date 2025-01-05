@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -43,7 +44,10 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 		Code:         code,
 		Redirect_uri: redirectURI,
 	}
+	// query := netUrl.QueryEscape(fmt.Sprintf("grant_type=authorization_code&code=%s&redirect_uri=%s",code, redirectURI))
+
 	b, err := json.Marshal(reqBody)
+	fmt.Println(string(b))
 	if err != nil {
 		return
 	}
@@ -53,7 +57,8 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 		return
 	}
 	request.Header.Add("Authorization", authHeader)
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("Accept", "application/json")
 	response, err := authClient.Do(request)
 	if err != nil {
 		return
