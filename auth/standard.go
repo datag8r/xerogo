@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	netUrl "net/url"
 	"strings"
 )
 
@@ -34,37 +35,36 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 	}
 	url := "https://identity.xero.com/connect/token"
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
-	type tokenRequest struct {
-		Grant_type   string `json:"grant_type"`
-		Code         string `json:"code"`
-		Redirect_uri string `json:"redirect_uri"`
-	}
-	var reqBody = tokenRequest{
-		Grant_type:   "authorization_code",
-		Code:         code,
-		Redirect_uri: redirectURI,
-	}
-	// query := netUrl.QueryEscape(fmt.Sprintf("grant_type=authorization_code&code=%s&redirect_uri=%s",code, redirectURI))
+	// type tokenRequest struct {
+	// 	Grant_type   string `json:"grant_type"`
+	// 	Code         string `json:"code"`
+	// 	Redirect_uri string `json:"redirect_uri"`
+	// }
 
-	b, err := json.Marshal(reqBody)
-	fmt.Println(string(b))
-	if err != nil {
-		return
-	}
-	buf := bytes.NewBuffer(b)
-	request, err := http.NewRequest("POST", url, buf)
+	// var reqBody = tokenRequest{
+	// 	Grant_type:   "authorization_code",
+	// 	Code:         code,
+	// 	Redirect_uri: redirectURI,
+	// }
+	query := netUrl.QueryEscape(fmt.Sprintf("grant_type=authorization_code&code=%s&redirect_uri=%s", code, redirectURI))
+	url = url + "?" + query //
+	// b, err := json.Marshal(reqBody)
+	// fmt.Println(string(b))
+	// if err != nil {
+	// 	return
+	// }
+	// buf := bytes.NewBuffer(b)
+	request, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return
 	}
 	request.Header.Add("Authorization", authHeader)
-	request.Header.Add("Content-Type", "application/json")
-	request.Header.Add("Accept", "application/json")
 	response, err := authClient.Do(request)
 	if err != nil {
 		return
 	}
 	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
+	b, err := io.ReadAll(response.Body)
 	if err != nil {
 		return
 	}
