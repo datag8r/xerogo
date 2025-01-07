@@ -8,6 +8,8 @@ import (
 	"net/http"
 	netUrl "net/url"
 	"strings"
+
+	"github.com/datag8r/xerogo/auth/endpoints"
 )
 
 // Redirect User To:
@@ -31,7 +33,7 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 		err = ErrInvalidInput
 		return
 	}
-	url := "https://identity.xero.com/connect/token"
+	url := endpoints.EndpointToken
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientID+":"+clientSecret))
 	data := netUrl.Values{}
 	data.Set("grant_type", "authorization_code")
@@ -74,7 +76,7 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 }
 
 func RefreshToken(clientId, clientSecret, RefreshToken string) (identityToken, accessToken, refreshToken string, err error) {
-	url := "https://identity.xero.com/connect/token"
+	url := endpoints.EndpointToken
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
 
 	data := netUrl.Values{}

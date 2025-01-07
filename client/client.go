@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/datag8r/xerogo/auth"
+	"github.com/datag8r/xerogo/tenant"
 )
 
 type client struct {
@@ -17,7 +18,7 @@ type client struct {
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
-	Tenants       []tenant
+	Tenants       []tenant.Tenant
 }
 
 // NewClient creates a new client object
@@ -76,22 +77,22 @@ func (c *client) RefreshTokens() (err error) {
 	return
 }
 
-func (c *client) Debug() string {
-	return fmt.Sprintf("%+v", c)
-}
+// func (c *client) Debug() string {
+// 	return fmt.Sprintf("%+v", c)
+// }
 
 func (c client) requiresRefresh() bool {
 	return time.Since(c.lastRefresh) > 30*time.Minute
 }
 
-func (c client) GetTenants() (t []tenant, err error) {
+func (c client) GetTenants() (t []tenant.Tenant, err error) {
 	if c.requiresRefresh() {
 		err = c.RefreshTokens()
 		if err != nil {
 			return
 		}
 	}
-	t, err = getTenants(c.accessToken)
+	t, err = tenant.GetTenants(c.accessToken)
 	if err == nil {
 		c.Tenants = t
 	}

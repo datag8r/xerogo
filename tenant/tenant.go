@@ -1,20 +1,22 @@
-package client
+package tenant
 
 import (
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	acc "github.com/datag8r/xerogo/accountingAPI/accounts"
 )
 
-type tenant struct {
+type Tenant struct {
 	TenantID       string `json:"tenantId"`
 	Name           string `json:"tenantName"`
 	CreatedDateUTC string `json:"createdDateUtc"`
 	UpdatedDateUTC string `json:"updatedDateUtc"`
 }
 
-func getTenants(accessToken string) (t []tenant, err error) {
+func GetTenants(accessToken string) (t []Tenant, err error) {
 	url := "https://api.xero.com/connections"
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -33,4 +35,8 @@ func getTenants(accessToken string) (t []tenant, err error) {
 	}
 	err = json.Unmarshal(b, &t)
 	return
+}
+
+func (t *Tenant) GetAccounts(accessToken string) (accounts []acc.Account, err error) {
+	return acc.GetAccounts(t.TenantID, accessToken)
 }
