@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 )
 
 type tenant struct {
-	TenantID       string    `json:"tenantId"`
-	Name           string    `json:"tenantName"`
-	CreatedDateUTC time.Time `json:"createdDateUtc"`
-	UpdatedDateUTC time.Time `json:"updatedDateUtc"`
+	TenantID       string `json:"tenantId"`
+	Name           string `json:"tenantName"`
+	CreatedDateUTC string `json:"createdDateUtc"`
+	UpdatedDateUTC string `json:"updatedDateUtc"`
 }
 
 func getTenants(accessToken string) (t []tenant, err error) {
