@@ -14,7 +14,7 @@ type client struct {
 	clientSecret  string
 	redirectURI   string
 	scope         []string
-	accessToken   string // Expiry: 30 minutes
+	AccessToken   string // Expiry: 30 minutes
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
@@ -56,7 +56,7 @@ func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState strin
 		return
 	}
 	c.identityToken = identityToken
-	c.accessToken = accessToken
+	c.AccessToken = accessToken
 	c.refreshToken = refreshToken
 	c.lastRefresh = time.Now()
 	return
@@ -71,7 +71,7 @@ func (c *client) RefreshTokens() (err error) {
 		return
 	}
 	c.identityToken = identityToken
-	c.accessToken = accessToken
+	c.AccessToken = accessToken
 	c.refreshToken = refreshToken
 	c.lastRefresh = time.Now()
 	return
@@ -92,7 +92,7 @@ func (c client) GetTenants() (t []tenant.Tenant, err error) {
 			return
 		}
 	}
-	t, err = tenant.GetTenants(c.accessToken)
+	t, err = tenant.GetTenants(c.AccessToken)
 	if err == nil {
 		c.Tenants = t
 	}
