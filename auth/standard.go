@@ -44,7 +44,7 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 	}
 	request.Header.Add("Authorization", authHeader)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	response, err := authClient.Do(request)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return
 	}
@@ -87,7 +87,7 @@ func RefreshToken(clientId, clientSecret, RefreshToken string) (identityToken, a
 	}
 	request.Header.Add("Authorization", authHeader)
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	response, err := authClient.Do(request)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return
 	}

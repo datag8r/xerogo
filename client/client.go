@@ -17,6 +17,7 @@ type client struct {
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
+	Tenants       []tenant
 }
 
 // NewClient creates a new client object
@@ -79,6 +80,20 @@ func (c *client) Debug() string {
 	return fmt.Sprintf("%+v", c)
 }
 
-// func (c client) requiresRefresh() bool {
-// 	return time.Since(c.lastRefresh) > 30*time.Minute
-// }
+func (c client) requiresRefresh() bool {
+	return time.Since(c.lastRefresh) > 30*time.Minute
+}
+
+func (c client) GetTenants() (t []tenant, err error) {
+	if c.requiresRefresh() {
+		err = c.RefreshTokens()
+		if err != nil {
+			return
+		}
+	}
+	t, err = getTenants(c.accessToken)
+	if err == nil {
+		c.Tenants = t
+	}
+	return
+}
