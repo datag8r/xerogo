@@ -12,15 +12,15 @@ import (
 )
 
 type Account struct {
-	Code                    string      // Required For Creation // maxlen = 10
-	Name                    string      // Required For Creation // maxlen = 150
-	Type                    accountType // Required For Creation
-	BankAccountNumber       *string     `json:",omitempty"` // Required For Creation If Type == Bank
-	Status                  accountStatusCode
-	Description             *string          `json:",omitempty"`
-	BankAccountType         *bankAccountType `json:",omitempty"`
-	CurrencyCode            *string          `json:",omitempty"`
-	TaxType                 string           // Will Be a taxType type when i make them
+	Code                    string            // Required For Creation // maxlen = 10
+	Name                    string            // Required For Creation // maxlen = 150
+	Type                    accountType       // Required For Creation
+	BankAccountNumber       *string           `json:",omitempty"` // Required For Creation If Type == Bank
+	Status                  accountStatusCode `json:"-"`
+	Description             *string           `json:",omitempty"`
+	BankAccountType         *bankAccountType  `json:",omitempty"`
+	CurrencyCode            *string           `json:",omitempty"`
+	TaxType                 string            // Will Be a taxType type when i make them
 	EnablePaymentsToAccount bool
 	ShowInExpenseClaims     bool
 	AccountID               string
