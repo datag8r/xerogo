@@ -1,12 +1,14 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/datag8r/xerogo/auth"
-	"github.com/datag8r/xerogo/tenant"
 )
 
 type client struct {
@@ -18,7 +20,7 @@ type client struct {
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
-	Tenants       []tenant.Tenant
+	Tenants       []*Tenant
 }
 
 // NewClient creates a new client object
@@ -31,11 +33,6 @@ func NewClient(clientID string, clientSecret string, redirectURI string, scope [
 		redirectURI:  redirectURI,
 		scope:        scope,
 	}
-}
-
-// GetClientID returns the client ID
-func (c *client) GetClientID() string {
-	return c.clientID
 }
 
 func (c *client) GetStandardAuthRedirectURL() (url string, state string) {
@@ -62,7 +59,14 @@ func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState strin
 	return
 }
 
-func (c *client) RefreshTokens() (err error) {
+func (c *client) Refresh() error {
+	if c.requiresRefresh() {
+		return c.refreshTokens()
+	}
+	return nil
+}
+
+func (c *client) refreshTokens() (err error) {
 	if c.refreshToken == "" {
 		return auth.ErrOfflineAccessNotEnabled
 	}
@@ -77,22 +81,36 @@ func (c *client) RefreshTokens() (err error) {
 	return
 }
 
-// func (c *client) Debug() string {
-// 	return fmt.Sprintf("%+v", c)
-// }
-
 func (c client) requiresRefresh() bool {
 	return time.Since(c.lastRefresh) > 30*time.Minute
 }
 
-func (c client) GetTenants() (t []tenant.Tenant, err error) {
-	if c.requiresRefresh() {
-		err = c.RefreshTokens()
-		if err != nil {
-			return
-		}
+func (c client) GetTenants() (t []*Tenant, err error) {
+	err = c.Refresh()
+	if err != nil {
+		return
 	}
-	t, err = tenant.GetTenants(c.AccessToken)
+	return c.getTenants()
+}
+
+func (c *client) getTenants() (t []*Tenant, err error) {
+	url := "https://api.xero.com/connections"
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.AccessToken))
+	request.Header.Add("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	b, err := io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &t)
 	if err == nil {
 		c.Tenants = t
 	}
