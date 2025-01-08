@@ -112,6 +112,9 @@ func (c *client) getTenants() (t []*Tenant, err error) {
 	}
 	err = json.Unmarshal(b, &t)
 	if err == nil {
+		for _, ten := range t {
+			ten.c = c
+		}
 		c.Tenants = t
 	}
 	return
