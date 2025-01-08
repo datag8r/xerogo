@@ -18,7 +18,8 @@ func WindowsCwd() string {
 func RemoveLastElementInPath(s string) string {
 	allParts := strings.Split(s, string(os.PathSeparator))
 	remainingParts := allParts[0 : len(allParts)-1]
-	return strings.Join(remainingParts, string(os.PathSeparator))
+	res := strings.Join(remainingParts, string(os.PathSeparator))
+	return res
 }
 func MacCwd() string {
 	path := os.Args[0]
@@ -32,7 +33,7 @@ func PathTo(s string) string {
 func PathToMinus(s string, count int) string {
 	p := Cwd
 	for range count {
-		p = RemoveLastElementInPath(Cwd)
+		p = RemoveLastElementInPath(p)
 	}
 	return fmt.Sprintf("%s\\%s", p, s)
 }

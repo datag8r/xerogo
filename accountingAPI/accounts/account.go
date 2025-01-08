@@ -33,6 +33,44 @@ type Account struct {
 	AddToWatchlist          bool
 }
 
+type accountForUpdate struct {
+	Code              string           // Required For Creation // maxlen = 10
+	Name              string           // Required For Creation // maxlen = 150
+	Type              accountType      // Required For Creation
+	BankAccountNumber *string          `json:",omitempty"` // Required For Creation If Type == Bank
+	Description       *string          `json:",omitempty"`
+	BankAccountType   *bankAccountType `json:",omitempty"`
+	CurrencyCode      *string          `json:",omitempty"`
+	AccountID         string
+	Class             accountClassType
+	SystemAccount     *systemAccountType `json:",omitempty"`
+	ReportingCode     string
+	ReportingCodeName string
+	HasAttachments    bool
+	UpdatedDateUTC    string
+	AddToWatchlist    bool
+}
+
+func (a Account) toUpdate() accountForUpdate {
+	return accountForUpdate{
+		Code:              a.Code,
+		Name:              a.Name,
+		Type:              a.Type,
+		BankAccountNumber: a.BankAccountNumber,
+		Description:       a.Description,
+		BankAccountType:   a.BankAccountType,
+		CurrencyCode:      a.CurrencyCode,
+		AccountID:         a.AccountID,
+		Class:             a.Class,
+		SystemAccount:     a.SystemAccount,
+		ReportingCode:     a.ReportingCode,
+		ReportingCodeName: a.ReportingCodeName,
+		HasAttachments:    a.HasAttachments,
+		UpdatedDateUTC:    a.UpdatedDateUTC,
+		AddToWatchlist:    a.AddToWatchlist,
+	}
+}
+
 func (a Account) validForCreation() bool {
 	// validate Code
 	if a.Code == "" || len(a.Code) > 10 {
@@ -246,7 +284,7 @@ func UpdateAccount(account Account, tenantID string, accessToken string) (err er
 		err = ErrInvalidAccountForUpdating
 		return
 	}
-	b, err := json.Marshal(account)
+	b, err := json.Marshal(account.toUpdate())
 	if err != nil {
 		return
 	}
