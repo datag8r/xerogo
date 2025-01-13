@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/datag8r/xerogo/auth"
@@ -20,7 +21,10 @@ type client struct {
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
-	Tenants       []*Tenant
+	Tenants       []*tenant
+	rateLimit     time.Duration `json:"-"`
+	lastCall      time.Time     `json:"-"`
+	rateMutex     sync.Mutex    `json:"-"`
 }
 
 // NewClient creates a new client object
@@ -32,6 +36,7 @@ func NewClient(clientID string, clientSecret string, redirectURI string, scope [
 		clientSecret: clientSecret,
 		redirectURI:  redirectURI,
 		scope:        scope,
+		rateLimit:    time.Millisecond * 6, // Default Rate Limited For Client: 10000 / minute == 6ms minimum between requests
 	}
 }
 
@@ -42,6 +47,7 @@ func (c *client) GetStandardAuthRedirectURL() (url string, state string) {
 }
 
 func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState string) (err error) {
+	c.Call()
 	if state != expectedState {
 		return auth.ErrMisMatchedState
 	}
@@ -61,6 +67,7 @@ func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState strin
 
 func (c *client) Refresh() error {
 	if c.requiresRefresh() {
+		c.Call()
 		return c.refreshTokens()
 	}
 	return nil
@@ -81,11 +88,11 @@ func (c *client) refreshTokens() (err error) {
 	return
 }
 
-func (c client) requiresRefresh() bool {
+func (c *client) requiresRefresh() bool {
 	return time.Since(c.lastRefresh) > 30*time.Minute
 }
 
-func (c client) GetTenants() (t []*Tenant, err error) {
+func (c *client) GetTenants() (t []*tenant, err error) {
 	err = c.Refresh()
 	if err != nil {
 		return
@@ -93,7 +100,8 @@ func (c client) GetTenants() (t []*Tenant, err error) {
 	return c.getTenants()
 }
 
-func (c *client) getTenants() (t []*Tenant, err error) {
+func (c *client) getTenants() (t []*tenant, err error) {
+	c.Call()
 	url := "https://api.xero.com/connections"
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -114,8 +122,22 @@ func (c *client) getTenants() (t []*Tenant, err error) {
 	if err == nil {
 		for _, ten := range t {
 			ten.c = c
+			ten.rateLimit = time.Second
+			ten.lastCall = time.Now()
 		}
 		c.Tenants = t
 	}
 	return
+}
+
+// This Function is Used For Rate Limiting, To avoid being rate lmited you should call this before every request
+// Built In (*tenant) and (*client) Methods Call This For you
+func (c *client) Call() {
+	c.rateMutex.Lock()
+	next := c.lastCall.Add(c.rateLimit) // Min Time Of Next Call
+	current := time.Now()
+	toWait := next.Sub(current)
+	<-time.After(toWait)
+	c.lastCall = time.Now()
+	c.rateMutex.Unlock()
 }

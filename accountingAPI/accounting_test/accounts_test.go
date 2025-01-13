@@ -1,7 +1,8 @@
-package accountingtest
+package accounting_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -13,37 +14,7 @@ import (
 )
 
 func TestGetAccounts(t *testing.T) {
-	conf, err := loadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-	token, err := loadTokenData()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if token.AccessToken == "" {
-		t.Fatal("Empty Access Token")
-	}
-	if token.RefreshToken == "" {
-		t.Fatal("Empty Refresh Token")
-	}
-	if token.TimeLastUpdated.IsZero() {
-		t.Fatal("TimeLastUpdate IsZero")
-	}
-	if time.Since(token.TimeLastUpdated) > (time.Hour*24)*60 {
-		t.Fatal("Expired Refresh Token")
-	}
-	id, access, refresh, err := auth.RefreshToken(conf.ClientID, conf.ClientSecret, token.RefreshToken)
-	if err != nil {
-		t.Fatal(err)
-	}
-	newTokenData := tokenData{
-		IdentityToken:   id,
-		AccessToken:     access,
-		RefreshToken:    refresh,
-		TimeLastUpdated: time.Now(),
-	}
-	err = saveTokenData(newTokenData)
+	conf, token, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,37 +28,7 @@ func TestGetAccounts(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
-	conf, err := loadConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-	token, err := loadTokenData()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if token.AccessToken == "" {
-		t.Fatal("Empty Access Token")
-	}
-	if token.RefreshToken == "" {
-		t.Fatal("Empty Refresh Token")
-	}
-	if token.TimeLastUpdated.IsZero() {
-		t.Fatal("TimeLastUpdate IsZero")
-	}
-	if time.Since(token.TimeLastUpdated) > (time.Hour*24)*60 {
-		t.Fatal("Expired Refresh Token")
-	}
-	id, access, refresh, err := auth.RefreshToken(conf.ClientID, conf.ClientSecret, token.RefreshToken)
-	if err != nil {
-		t.Fatal(err)
-	}
-	newTokenData := tokenData{
-		IdentityToken:   id,
-		AccessToken:     access,
-		RefreshToken:    refresh,
-		TimeLastUpdated: time.Now(),
-	}
-	err = saveTokenData(newTokenData)
+	conf, token, err := setup()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,6 +61,21 @@ func TestUpdateAccount(t *testing.T) {
 	var after = a.Name
 	if before == after {
 		t.Fatal("name didnt change:\n\tbefore:\t" + before + "\n\tafter:" + after)
+	}
+}
+
+func TestCreateAccount(t *testing.T) {
+	conf, token, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	a := accounts.Account{Code: "TESTNEW4", Name: "Test New Account4", Type: accounts.AccountTypeExpense}
+	a, err = accounts.CreateAccount(a, conf.TenantID, token.AccessToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.AccountID == "" {
+		t.Fatal("Account ID Field Empty after creation")
 	}
 }
 
@@ -168,5 +124,42 @@ func loadTokenData() (t tokenData, err error) {
 		return
 	}
 	err = json.Unmarshal(b, &t)
+	return
+}
+
+func setup() (conf testConfig, token tokenData, err error) {
+	conf, err = loadConfig()
+	if err != nil {
+		return
+	}
+	token, err = loadTokenData()
+	if err != nil {
+		return
+	}
+	if token.AccessToken == "" {
+		err = errors.New("Empty Access Token")
+		return
+	}
+	if token.RefreshToken == "" {
+		err = errors.New("Empty Refresh Token")
+		return
+	}
+	if token.TimeLastUpdated.IsZero() {
+		err = errors.New("TimeLastUpdate IsZero")
+		return
+	}
+	if time.Since(token.TimeLastUpdated) > (time.Hour*24)*60 {
+		err = errors.New("Expired Refresh Token")
+		return
+	}
+	id, access, refresh, err := auth.RefreshToken(conf.ClientID, conf.ClientSecret, token.RefreshToken)
+	if err != nil {
+		return
+	}
+	token.IdentityToken = id
+	token.AccessToken = access
+	token.RefreshToken = refresh
+	token.TimeLastUpdated = time.Now()
+	err = saveTokenData(token)
 	return
 }
