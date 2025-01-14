@@ -24,6 +24,7 @@ func TestGetContacts(t *testing.T) {
 		t.Fatal("len of contacts is 0")
 	}
 }
+
 func TestGetContactsWithPagination(t *testing.T) {
 	conf, token, err := setup()
 	if err != nil {
@@ -72,5 +73,47 @@ func TestGetContact(t *testing.T) {
 	}
 	if c.ContactID != id {
 		t.Fatal("mismatched ids", c.ContactID)
+	}
+}
+
+func TestCreateContact(t *testing.T) {
+	conf, token, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	contactName := "TEST1"
+	contact := contacts.Contact{Name: contactName}
+	c, err := contacts.CreateContact(contact, conf.TenantID, token.AccessToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.ContactID == "" {
+		t.Fatal("emtpy id field returned", c.ContactID)
+	}
+}
+
+func TestUpdateContact(t *testing.T) {
+	conf, token, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	contactId := "cdd0f9a8-5df3-4979-9d13-a971486f672f"
+	contactNewName := "TEST2"
+	contact := contacts.Contact{ContactID: contactId, Name: contactNewName}
+	err = contacts.UpdateContact(contact, conf.TenantID, token.AccessToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestArchiveContact(t *testing.T) {
+	conf, token, err := setup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	contactId := "cdd0f9a8-5df3-4979-9d13-a971486f672f"
+	err = contacts.ArchiveContact(contactId, conf.TenantID, token.AccessToken)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

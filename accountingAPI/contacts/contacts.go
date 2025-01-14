@@ -1,6 +1,7 @@
 package contacts
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,136 +18,48 @@ import (
 
 type Contact struct {
 	// Retreived On Multi Contact Get Requests
-	ContactID                 string
-	ContactNumber             string
-	AccountNumber             string
-	ContactState              contactStatus
+	ContactID                 string        `json:",omitempty"`
+	ContactNumber             string        `json:",omitempty"`
+	AccountNumber             string        `json:",omitempty"`
+	ContactState              contactStatus `json:",omitempty"`
 	Name                      string
-	FirstName                 string
-	LastName                  string
-	EmailAddress              string
-	BankAccountDetails        string
-	CompanyNumber             string // max length 50 char
-	TaxNumber                 string
-	AccountsReceivableTaxType string // will be taxType
-	AccountsPayableTaxType    string // will be taxType
-	Addresses                 []addressDetails
-	Phones                    []phoneDetails
-	IsSupplier                bool
-	IsCustomer                bool
-	DefaultCurrency           string
-	UpdatedDateUTC            string
+	FirstName                 string           `json:",omitempty"`
+	LastName                  string           `json:",omitempty"`
+	EmailAddress              string           `json:",omitempty"`
+	BankAccountDetails        string           `json:",omitempty"`
+	CompanyNumber             string           `json:",omitempty"` // max length 50 char
+	TaxNumber                 string           `json:",omitempty"`
+	AccountsReceivableTaxType string           `json:",omitempty"` // will be taxType
+	AccountsPayableTaxType    string           `json:",omitempty"` // will be taxType
+	Addresses                 []addressDetails `json:",omitempty"`
+	Phones                    []phoneDetails   `json:",omitempty"`
+	IsSupplier                bool             `json:",omitempty"`
+	IsCustomer                bool             `json:",omitempty"`
+	DefaultCurrency           string           `json:",omitempty"`
+	UpdatedDateUTC            string           `json:",omitempty"`
 	// Only Retreived with pagination or single contact request
-	ContactPersons                 []ContactPerson
-	XeroNetworkKey                 string
-	MergedToContactID              string
-	SalesDefaultAccountCode        string
-	PurchaseDefaultAccountCode     string
-	SalesTrackingTCategories       []trackingcategories.TrackingCategory
-	PurchaseTrackingCategories     []trackingcategories.TrackingCategory
-	SalesDefaultLineAmountType     lineAmountType
-	PurchasesDefaultLineAmountType lineAmountType
-	TrackingCategoryName           string
-	TrackingOptionName             string
-	PaymentTerms                   paymentTerms
+	ContactPersons                 []ContactPerson                       `json:",omitempty"`
+	XeroNetworkKey                 string                                `json:",omitempty"`
+	MergedToContactID              string                                `json:",omitempty"`
+	SalesDefaultAccountCode        string                                `json:",omitempty"`
+	PurchaseDefaultAccountCode     string                                `json:",omitempty"`
+	SalesTrackingTCategories       []trackingcategories.TrackingCategory `json:",omitempty"`
+	PurchaseTrackingCategories     []trackingcategories.TrackingCategory `json:",omitempty"`
+	SalesDefaultLineAmountType     lineAmountType                        `json:",omitempty"`
+	PurchasesDefaultLineAmountType lineAmountType                        `json:",omitempty"`
+	TrackingCategoryName           string                                `json:",omitempty"`
+	TrackingOptionName             string                                `json:",omitempty"`
+	PaymentTerms                   paymentTerms                          `json:",omitempty"`
 	// ContactGroups                  ContactGroups
 	Website       string
-	BrandingTheme brandingthemes.BrandingTheme
+	BrandingTheme brandingthemes.BrandingTheme `json:",omitzero"`
 	// BatchPayments                  batchPaymentDetails // ??
 	Discount       string
 	Balances       balances // idek
 	HasAttachments bool
 }
 
-type balances struct {
-	AccountsPayable    *balance `json:"AccountsPayable,omitempty"`
-	AccountsReceivable *balance `json:"AccountsReceivable,omitempty"`
-}
-
-type balance struct {
-	Outstanding float64
-	Overdue     float64
-}
-
-type paymentTerms string
-
-// payment terms? not sure where number goes
-// DAYSAFTERBILLDATE	day(s) after bill date
-// DAYSAFTERBILLMONTH	day(s) after bill month
-// OFCURRENTMONTH	of the current month
-// OFFOLLOWINGMONTH
-
-// This will probably move
-type lineAmountType string
-
-var (
-	LineAmountTypeInclusive lineAmountType = "INCLUSIVE"
-	LineAmountTypeExclusive lineAmountType = "EXCLUSIVE"
-	LineAmountTypeNone      lineAmountType = "NONE"
-)
-
-type CISSettings struct {
-	CISEnabled bool
-	Rate       int
-}
-
-type contactStatus string
-
-var (
-	ContactStatusActive      contactStatus = "ACTIVE"
-	ContactStatusArchived    contactStatus = "ARCHIVED"
-	ContactStatusGDPRRequest contactStatus = "GDPRREQUEST"
-)
-
-type phoneDetails struct {
-	Phonetype        phoneType
-	PhoneNumber      string // max length 50 chars
-	PhoneAreaCode    string // max length 10 chars
-	PhoneCountryCode string // max length 20 chars
-}
-
-type phoneType string
-
-var (
-	PhoneTypeDefault phoneType = "DEFAULT"
-	PhoneTypeDDI     phoneType = "DDI"
-	PhoneTypeMobile  phoneType = "MOBILE"
-	PhoneTypeFax     phoneType = "FAX"
-)
-
-type addressDetails struct {
-	AddressType  addressType
-	AddressLine1 string // max length = 500
-	AddressLine2 string // max length = 500
-	AddressLine3 string // max length = 500
-	City         string // max length = 500
-	Region       string // max length = 500
-	PostalCode   string // max length = 500
-	Country      string // max length = 50 | [A-Z], [a-z] only
-	AttentionTo  string // max length = 255
-}
-
-type addressType string
-
-var (
-	AddressTypePOBox    addressType = "POBOX"
-	AddressTypeStreet   addressType = "STREET"
-	AddressTypeDelivery addressType = "DELIVERY" // Not Valid For Contacts
-)
-
-type ContactPerson struct {
-	FirstName       string
-	LastName        string
-	EmailAddress    string
-	IncludeInEmails bool
-}
-
-var (
-	ErrInvalidContactForCreation = errors.New("one or more required fields were invalid to create this contact")
-	ErrInvalidContactForUpdating = errors.New("a valid contact id is required to update an contact")
-	ErrInvalidContactID          = errors.New("invalid contact id for request")
-)
-
+// includeArchived
 func GetContacts(tenantID, accessToken string, page *uint, where *filter.Filter) (contacts []Contact, pageData *pagination.PaginationData, err error) {
 	url := endpoints.EndpointContacts
 	if page != nil { // make this a func later
@@ -188,12 +101,12 @@ func GetContacts(tenantID, accessToken string, page *uint, where *filter.Filter)
 	return
 }
 
-func GetContact(tenantId, accessToken, contactId string) (contact Contact, err error) {
-	if len(contactId) != len("297c2dc5-cc47-4afd-8ec8-74990b8761e9") { // figure out the number
+func GetContact(tenantId, accessToken, contactIdOrNumber string) (contact Contact, err error) {
+	if contactIdOrNumber == "" {
 		err = ErrInvalidContactID
 		return
 	}
-	url := endpoints.EndpointContacts + "/" + contactId
+	url := endpoints.EndpointContacts + "/" + contactIdOrNumber
 	var request *http.Request
 	request, err = http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -223,7 +136,120 @@ func GetContact(tenantId, accessToken, contactId string) (contact Contact, err e
 	return
 }
 
-func CreateContact(contact Contact, tenantId, accessToken string) (err error)  { return }
-func UpdateContact(contact Contact, tenantId, accessToken string) (err error)  { return }
-func ArchiveContact(contact Contact, tenantId, accessToken string) (err error) { return }
-func DeleteContact(contact Contact, tenantId, accessToken string) (err error)  { return }
+func CreateContact(contactToCreate Contact, tenantId, accessToken string) (contact Contact, err error) {
+	if contactToCreate.Name == "" {
+		err = ErrInvalidContactForCreation
+		return
+	}
+	url := endpoints.EndpointContacts
+	b, err := json.Marshal(contactToCreate)
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	var request *http.Request
+	request, err = http.NewRequest("POST", url, buf)
+	if err != nil {
+		return
+	}
+	utils.AddXeroHeaders(request, accessToken, tenantId)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	b, err = io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	if response.StatusCode != 200 {
+		err = errors.New(string(b))
+		return
+	}
+	var responseBody struct {
+		Contacts []Contact
+	}
+	err = json.Unmarshal(b, &responseBody)
+	if err != nil {
+		return
+	}
+	if len(responseBody.Contacts) == 1 {
+		contact = responseBody.Contacts[0]
+	}
+	return
+}
+
+func UpdateContact(contact Contact, tenantId, accessToken string) (err error) {
+	if contact.ContactID == "" {
+		return ErrInvalidContactForUpdating
+	}
+	url := endpoints.EndpointContacts
+	b, err := json.Marshal(contact)
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	var request *http.Request
+	request, err = http.NewRequest("POST", url, buf)
+	if err != nil {
+		return
+	}
+	utils.AddXeroHeaders(request, accessToken, tenantId)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	b, err = io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	if response.StatusCode != 200 {
+		err = errors.New(string(b))
+		return
+	}
+	var responseBody struct {
+		Contacts []Contact
+	}
+	err = json.Unmarshal(b, &responseBody)
+	return
+}
+
+func ArchiveContact(contactId, tenantId, accessToken string) (err error) {
+	if contactId == "" {
+		return ErrInvalidContactID
+	}
+	url := endpoints.EndpointContacts
+	var requestBody struct {
+		ContactID     string
+		ContactStatus string
+	}
+	requestBody.ContactID = contactId
+	requestBody.ContactStatus = string(ContactStatusArchived)
+	b, err := json.Marshal(requestBody)
+	if err != nil {
+		return
+	}
+	buf := bytes.NewBuffer(b)
+	request, err := http.NewRequest("POST", url, buf)
+	if err != nil {
+		return
+	}
+	utils.AddXeroHeaders(request, accessToken, tenantId)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	b, err = io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	if response.StatusCode != 200 {
+		return errors.New(string(b))
+	}
+	return
+}
+
+// summaryOnly
+// searchTerm

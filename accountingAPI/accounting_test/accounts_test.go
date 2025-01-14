@@ -3,7 +3,6 @@ package accounting_test
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -23,7 +22,7 @@ func TestGetAccounts(t *testing.T) {
 		t.Fatal(err)
 	}
 	if l := len(accs); l == 0 {
-		t.Fatal("len of accs: " + fmt.Sprint(l))
+		t.Fatal("len of accs is 0")
 	}
 }
 
@@ -37,7 +36,7 @@ func TestUpdateAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	if l := len(accs); l == 0 {
-		t.Fatal("len of accs: " + fmt.Sprint(l))
+		t.Fatal("len of accs is 0")
 	}
 
 	a := accs[0]
@@ -54,7 +53,7 @@ func TestUpdateAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	if l := len(accs); l == 0 {
-		t.Fatal("len of accs: " + fmt.Sprint(l))
+		t.Fatal("len of accs is 0")
 	}
 
 	a = accs[0]

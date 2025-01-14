@@ -6,10 +6,12 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/datag8r/xerogo/auth"
+	"github.com/datag8r/xerogo/utils"
 )
 
 type client struct {
@@ -38,6 +40,47 @@ func NewClient(clientID string, clientSecret string, redirectURI string, scope [
 		scope:        scope,
 		rateLimit:    time.Millisecond * 6, // Default Rate Limited For Client: 10000 / minute == 6ms minimum between requests
 	}
+}
+
+type tokenData struct {
+	IdentityToken   string    `json:"identity_token"`
+	AccessToken     string    `json:"access_token"`
+	RefreshToken    string    `json:"refresh_token"`
+	TimeLastUpdated time.Time `json:"time_last_updated"`
+}
+
+func (c *client) SaveTokenDataToJsonFile(filePath string) (err error) {
+	path := utils.PathTo(filePath)
+	var t tokenData = tokenData{
+		IdentityToken:   c.identityToken,
+		AccessToken:     c.AccessToken,
+		RefreshToken:    c.refreshToken,
+		TimeLastUpdated: c.lastRefresh,
+	}
+	b, err := json.Marshal(t)
+	if err != nil {
+		return
+	}
+	err = os.WriteFile(path, b, os.ModePerm)
+	return
+}
+
+func (c *client) LoadTokenDataFromJsonFile(filePath string) (err error) {
+	path := utils.PathTo(filePath)
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	var t tokenData
+	err = json.Unmarshal(b, &t)
+	if err != nil {
+		return
+	}
+	c.identityToken = t.IdentityToken
+	c.AccessToken = t.AccessToken
+	c.refreshToken = t.RefreshToken
+	c.lastRefresh = t.TimeLastUpdated
+	return
 }
 
 func (c *client) GetStandardAuthRedirectURL() (url string, state string) {

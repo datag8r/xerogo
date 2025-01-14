@@ -72,9 +72,9 @@ func TestModifiedAfter(t *testing.T) {
 		t.Fatal(err)
 	}
 	actualHeader := req.Header.Get("If-Modified-Since")
-	expextedHeader := testTime.UTC().String() // This Probably needs a custom format to match xero
-	if actualHeader != expextedHeader {
-		t.Fatal("Req Header Value Did Not Match Expected:\n\texpected:\t" + expextedHeader + "\n\tgot:\t\t" + actualHeader)
+	expectedHeader := testTime.UTC().String() // This Probably needs a custom format to match xero
+	if actualHeader != expectedHeader {
+		t.Fatal("Req Header Value Did Not Match Expected:\n\texpected:\t" + expectedHeader + "\n\tgot:\t\t" + actualHeader)
 	}
 }
 
@@ -101,11 +101,11 @@ func TestFilterMulti(t *testing.T) {
 		"&where=TEST_FIELD_NAME_3%3D%3D%22TEST_FIELD_VALUE_4%22" +
 		"%26%26TEST_FIELD_NAME_4%3D%3D%22TEST_FIELD_VALUE_5%22"
 	actualHeader := req.Header.Get("If-Modified-Since")
-	expextedHeader := testTime.UTC().String() // This Probably needs a custom format to match xero
+	expectedHeader := testTime.UTC().String() // This Probably needs a custom format to match xero
 	if actualUrl != expectedUrl {
 		t.Fatal("Req URL Did Not Match Expected:\n\texpected:\t" + expectedUrl + "\n\tgot:\t\t" + actualUrl)
 	}
-	if actualHeader != expextedHeader {
-		t.Fatal("Req Header Value Did Not Match Expected:\n\texpected:\t" + expextedHeader + "\n\tgot:\t\t" + actualHeader)
+	if actualHeader != expectedHeader {
+		t.Fatal("Req Header Value Did Not Match Expected:\n\texpected:\t" + expectedHeader + "\n\tgot:\t\t" + actualHeader)
 	}
 }

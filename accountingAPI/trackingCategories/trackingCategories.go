@@ -12,3 +12,17 @@ type TrackingOption struct {
 	Name             string
 	Status           string // ? | probs ACTIVE / ARCHIVED
 }
+
+func GetTrackingCategories()   {}
+func GetTrackingCategory()     {} //includeArchived
+func UpdateTrackingCategory()  {}
+func CreateTrackingCategory()  {}
+func ArchiveTrackingCategory() {}
+func DeleteTrackingCategory()  {}
+
+func GetTrackingOptions()    {}
+func GetTrackingOption()     {}
+func UpdateTrackingOption()  {}
+func CreateTrackingOption()  {}
+func ArchiveTrackingOption() {}
+func DeleteTrackingOption()  {}

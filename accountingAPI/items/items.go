@@ -1,8 +1,6 @@
 package items
 
 import (
-
-	// 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -28,110 +26,6 @@ type Item struct {
 	IsTrackedAsInventory      bool             // True for items that are tracked as inventory. An item will be tracked as inventory if the InventoryAssetAccountCode and COGSAccountCode are set.
 	UpdatedDateUTC            string
 }
-
-type itemForCreate struct {
-	Code                      string
-	InventoryAssetAccountCode *string `json:",omitempty"`
-	Name                      string  `json:",omitempty"`
-	IsSold                    bool
-	IsPurchased               bool
-	Description               string           `json:",omitempty"`
-	PurchaseDescription       string           `json:",omitempty"`
-	PurchaseDetails           *PurchaseDetails `json:",omitempty"`
-	SalesDetails              *SalesDetails    `json:",omitempty"`
-}
-
-type itemForUpdate struct {
-	ItemID                    string `json:",omitempty"`
-	Code                      string
-	InventoryAssetAccountCode *string `json:",omitempty"`
-	Name                      string  `json:",omitempty"`
-	IsSold                    bool
-	IsPurchased               bool
-	Description               string           `json:",omitempty"`
-	PurchaseDescription       string           `json:",omitempty"`
-	PurchaseDetails           *PurchaseDetails `json:",omitempty"`
-	SalesDetails              *SalesDetails    `json:",omitempty"`
-}
-
-func (i Item) validForCreation() bool {
-	if i.Code == "" {
-		return false
-	}
-	if i.IsTrackedAsInventory &&
-		(i.InventoryAssetAccountCode == nil || *i.InventoryAssetAccountCode == "") {
-		return false
-	}
-	return true
-}
-
-func (i Item) validForUpdating() bool {
-	if i.Code == "" && i.ItemID == "" {
-		return false
-	}
-	if i.IsTrackedAsInventory &&
-		(i.InventoryAssetAccountCode == nil || *i.InventoryAssetAccountCode == "") {
-		return false
-	}
-	return true
-}
-
-func (i Item) toCreate() itemForCreate {
-	return itemForCreate{
-		Code:                      i.Code,
-		InventoryAssetAccountCode: i.InventoryAssetAccountCode,
-		Name:                      i.Name,
-		IsSold:                    i.IsSold,
-		IsPurchased:               i.IsPurchased,
-		Description:               i.Description,
-		PurchaseDescription:       i.PurchaseDescription,
-		PurchaseDetails:           i.PurchaseDetails,
-		SalesDetails:              i.SalesDetails,
-	}
-}
-
-func (i Item) toUpdate() itemForUpdate {
-	return itemForUpdate{
-		ItemID:                    i.ItemID,
-		Code:                      i.Code,
-		InventoryAssetAccountCode: i.InventoryAssetAccountCode,
-		Name:                      i.Name,
-		IsSold:                    i.IsSold,
-		IsPurchased:               i.IsPurchased,
-		Description:               i.Description,
-		PurchaseDescription:       i.PurchaseDescription,
-		PurchaseDetails:           i.PurchaseDetails,
-		SalesDetails:              i.SalesDetails,
-	}
-}
-
-type PurchaseDetails struct {
-	UnitPrice       float64
-	AccountCode     string
-	TaxType         string  // Will be taxType when I make them
-	COGSAccountCode *string // TODO
-}
-
-type SalesDetails struct {
-	UnitPrice   float64
-	AccountCode string
-	TaxType     string // Will be taxType when I make them
-}
-
-type ItemHistory struct {
-	Changes       string
-	DateUTCString string
-	DateUTC       string
-	User          string
-	Details       string
-}
-
-var (
-	ErrInvalidItemForCreation = errors.New("some fields are invalid to create an item")
-	ErrInvalidItemForUpdating = errors.New("some fields are invalid to update an item" +
-		" - usually this is the code field")
-	ErrInvalidItemID = errors.New("invalid item id for request")
-)
 
 func GetItems(tenantID, accessToken string, where *filter.Filter) (items []Item, err error) {
 	url := endpoints.EndpointItems
