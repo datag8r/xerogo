@@ -3,6 +3,8 @@ package accounting_test
 import (
 	"testing"
 
+	"github.com/datag8r/xerogo/accountingAPI/endpoints"
+	"github.com/datag8r/xerogo/accountingAPI/history"
 	"github.com/datag8r/xerogo/accountingAPI/items"
 )
 
@@ -39,7 +41,7 @@ func TestGetItemHistory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	history, err := items.GetItemHistory("14df66b4-463b-4b1e-b302-b39cc2865304", conf.TenantID, token.AccessToken)
+	history, err := history.GetResourceHistory(endpoints.EndpointItems, "14df66b4-463b-4b1e-b302-b39cc2865304", conf.TenantID, token.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +98,7 @@ func TestAddNoteToItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = items.AddNoteToItem("14df66b4-463b-4b1e-b302-b39cc2865304", "test note auto", conf.TenantID, token.AccessToken)
+	err = history.AddNoteToResource(endpoints.EndpointItems, "14df66b4-463b-4b1e-b302-b39cc2865304", "test note auto", conf.TenantID, token.AccessToken)
 	if err != nil {
 		t.Fatal(err)
 	}

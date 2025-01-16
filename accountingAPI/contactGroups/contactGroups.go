@@ -1,14 +1,9 @@
 package contactgroups
 
 import (
-	"encoding/json"
-	"errors"
-	"io"
-	"net/http"
-
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"github.com/datag8r/xerogo/filter"
-	"github.com/datag8r/xerogo/utils"
+	"github.com/datag8r/xerogo/helpers"
 )
 
 type ContactGroup struct {
@@ -20,62 +15,38 @@ type ContactGroup struct {
 
 func GetContactGroups(tenantId, accessToken string, where *filter.Filter) (contactGroups []ContactGroup, err error) {
 	url := endpoints.EndpointContactGroups
-	var request *http.Request
-	if where != nil {
-		request, err = where.BuildRequest("GET", url, nil)
-	} else {
-		request, err = http.NewRequest("GET", url, nil)
-	}
+	request, err := helpers.BuildRequest("GET", url, nil, nil, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
 	var responseBody struct {
 		ContactGroups []ContactGroup
 	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	contactGroups = responseBody.ContactGroups
 	return
 }
 
 func GetContactGroup(tenantId, accessToken, contactGroupId string) (contactGroup ContactGroup, err error) {
 	url := endpoints.EndpointContactGroups + "/" + contactGroupId
-	var request *http.Request
-	request, err = http.NewRequest("GET", url, nil)
+	request, err := helpers.BuildRequest("GET", url, nil, nil, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
 	var responseBody struct {
 		ContactGroups []ContactGroup
 	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	if len(responseBody.ContactGroups) == 1 {
 		contactGroup = responseBody.ContactGroups[0]
 	}

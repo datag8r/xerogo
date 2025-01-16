@@ -13,14 +13,6 @@ type SalesDetails struct {
 	TaxType     string // Will be taxType when I make them
 }
 
-type ItemHistory struct {
-	Changes       string
-	DateUTCString string
-	DateUTC       string
-	User          string
-	Details       string
-}
-
 type itemForCreate struct {
 	Code                      string
 	InventoryAssetAccountCode *string `json:",omitempty"`

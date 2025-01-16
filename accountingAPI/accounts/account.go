@@ -1,15 +1,9 @@
 package accounts
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"io"
-	"net/http"
-
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"github.com/datag8r/xerogo/filter"
-	"github.com/datag8r/xerogo/utils"
+	"github.com/datag8r/xerogo/helpers"
 )
 
 type Account struct {
@@ -36,100 +30,65 @@ type Account struct {
 
 func GetAccounts(tenantId, accessToken string, where *filter.Filter) (accounts []Account, err error) {
 	url := endpoints.EndpointAccounts
-	var request *http.Request
-	if where != nil {
-		request, err = where.BuildRequest("GET", url, nil)
-	} else {
-		request, err = http.NewRequest("GET", url, nil)
-	}
+	request, err := helpers.BuildRequest("GET", url, nil, where, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
 	var responseBody struct {
 		Accounts []Account
 	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	accounts = responseBody.Accounts
 	return
 }
 
 func GetAccount(accountID string, tenantId, accessToken string) (acc Account, err error) {
-	if len(accountID) != len("297c2dc5-cc47-4afd-8ec8-74990b8761e9") { // figure out the number
+	if accountID == "" {
 		err = ErrInvalidAccountID
 		return
 	}
 	url := endpoints.EndpointAccounts + "/" + accountID
-	var request *http.Request
-	request, err = http.NewRequest("GET", url, nil)
+	request, err := helpers.BuildRequest("GET", url, nil, nil, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &acc)
+	err = helpers.UnmarshalJson(body, &acc)
 	return
 }
 
-func CreateAccount(account Account, tenantID string, accessToken string) (acc Account, err error) {
+func CreateAccount(account Account, tenantId string, accessToken string) (acc Account, err error) {
 	url := endpoints.EndpointAccounts
 	if !account.validForCreation() {
 		err = ErrInvalidAccountForCreation
 		return
 	}
-	b, err := json.Marshal(account.toCreate())
+	buf, err := helpers.MarshallJsonToBuffer(account.toCreate())
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	var request *http.Request
-	request, err = http.NewRequest("PUT", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantID)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
 		return
 	}
 	var responseBody struct {
 		Accounts []Account
 	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	if err != nil {
 		return
 	}
@@ -139,40 +98,26 @@ func CreateAccount(account Account, tenantID string, accessToken string) (acc Ac
 	return
 }
 
-func UpdateAccount(account Account, tenantID string, accessToken string) (err error) {
+func UpdateAccount(account Account, tenantId string, accessToken string) (err error) {
 	url := endpoints.EndpointAccounts
 	if !account.validForUpdate() {
 		err = ErrInvalidAccountForUpdating
 		return
 	}
-	b, err := json.Marshal(account.toUpdate())
+	buf, err := helpers.MarshallJsonToBuffer(account.toUpdate())
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	var request *http.Request
-	request, err = http.NewRequest("POST", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantID)
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	return nil
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	_, err = helpers.DoRequest(request, 200)
+	return
 }
 
-func ArchiveAccount(accountID string, tenantID, accessToken string) (err error) {
+func ArchiveAccount(accountID string, tenantId, accessToken string) (err error) {
 	if accountID == "" {
 		err = ErrInvalidAccountID
 		return
@@ -184,58 +129,32 @@ func ArchiveAccount(accountID string, tenantID, accessToken string) (err error) 
 	}
 	requestBody.AccountID = accountID
 	requestBody.Status = string(AccountStatusCodeArchived)
-	b, err := json.Marshal(requestBody)
+	buf, err := helpers.MarshallJsonToBuffer(requestBody)
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	request, err := http.NewRequest("POST", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantID)
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		return errors.New(string(b))
-	}
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	_, err = helpers.DoRequest(request, 200)
 	return
 }
 
 // System accounts and accounts used on transactions can not be deleted using the delete method.
 // If an account is not able to be deleted you can update the status to ARCHIVED using the accounts.ArchiveAccount Function
-func DeleteAccount(accountID string, tenantID, accessToken string) (err error) {
+func DeleteAccount(accountID string, tenantId, accessToken string) (err error) {
 	if accountID == "" {
 		err = ErrInvalidAccountID
 		return
 	}
 	url := endpoints.EndpointAccounts + "/" + accountID
-	request, err := http.NewRequest("DELETE", url, nil)
+	request, err := helpers.BuildRequest("DELETE", url, nil, nil, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantID)
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		return errors.New(string(b))
-	}
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	_, err = helpers.DoRequest(request, 200)
 	return
 }
-
-// TODO Add Attachments to Account
-// TODO Get Attachments from Account

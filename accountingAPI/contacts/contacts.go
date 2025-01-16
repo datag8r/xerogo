@@ -1,28 +1,21 @@
 package contacts
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-
 	brandingthemes "github.com/datag8r/xerogo/accountingAPI/brandingThemes"
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"github.com/datag8r/xerogo/accountingAPI/pagination"
 	trackingcategories "github.com/datag8r/xerogo/accountingAPI/trackingCategories"
 	"github.com/datag8r/xerogo/filter"
-	"github.com/datag8r/xerogo/utils"
+	"github.com/datag8r/xerogo/helpers"
 )
 
 type Contact struct {
 	// Retreived On Multi Contact Get Requests
-	ContactID                 string        `json:",omitempty"`
-	ContactNumber             string        `json:",omitempty"`
-	AccountNumber             string        `json:",omitempty"`
-	ContactState              contactStatus `json:",omitempty"`
-	Name                      string
+	ContactID                 string           `json:",omitempty"`
+	ContactNumber             string           `json:",omitempty"`
+	AccountNumber             string           `json:",omitempty"`
+	ContactStatus             contactStatus    `json:",omitempty"`
+	Name                      string           `json:",omitempty"`
 	FirstName                 string           `json:",omitempty"`
 	LastName                  string           `json:",omitempty"`
 	EmailAddress              string           `json:",omitempty"`
@@ -51,34 +44,27 @@ type Contact struct {
 	TrackingOptionName             string                                `json:",omitempty"`
 	PaymentTerms                   paymentTerms                          `json:",omitempty"`
 	// ContactGroups                  ContactGroups
-	Website       string
+	Website       string                       `json:",omitempty"`
 	BrandingTheme brandingthemes.BrandingTheme `json:",omitzero"`
 	// BatchPayments                  batchPaymentDetails // ??
-	Discount       string
+	Discount       string   `json:",omitempty"`
 	Balances       balances // idek
 	HasAttachments bool
 }
 
+func (c Contact) IsZero() bool {
+	return c.ContactID == ""
+}
+
 // includeArchived
-func GetContacts(tenantID, accessToken string, page *uint, where *filter.Filter) (contacts []Contact, pageData *pagination.PaginationData, err error) {
+func GetContacts(tenantId, accessToken string, page *uint, where *filter.Filter) (contacts []Contact, pageData *pagination.PaginationData, err error) {
 	url := endpoints.EndpointContacts
-	if page != nil { // make this a func later
-		url += "?page=" + fmt.Sprint(*page)
-		if !pagination.IsDefaultPageSize() {
-			url += "?pageSize=" + fmt.Sprint(pagination.CustomPageSize)
-		}
-	}
-	var request *http.Request
-	if where != nil {
-		request, err = where.BuildRequest("GET", url, nil)
-	} else {
-		request, err = http.NewRequest("GET", url, nil)
-	}
+	request, err := helpers.BuildRequest("GET", url, page, where, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantID)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
@@ -86,16 +72,7 @@ func GetContacts(tenantID, accessToken string, page *uint, where *filter.Filter)
 		Pagination *pagination.PaginationData
 		Contacts   []Contact
 	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	contacts = responseBody.Contacts
 	pageData = responseBody.Pagination
 	return
@@ -107,29 +84,19 @@ func GetContact(tenantId, accessToken, contactIdOrNumber string) (contact Contac
 		return
 	}
 	url := endpoints.EndpointContacts + "/" + contactIdOrNumber
-	var request *http.Request
-	request, err = http.NewRequest("GET", url, nil)
+	request, err := helpers.BuildRequest("GET", url, nil, nil, nil)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err := io.ReadAll(response.Body)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
 		return
 	}
 	var responseBody struct {
 		Contacts []Contact `json:"Contacts"`
 	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
-		return
-	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	if len(responseBody.Contacts) == 1 {
 		contact = responseBody.Contacts[0]
 	}
@@ -142,34 +109,23 @@ func CreateContact(contactToCreate Contact, tenantId, accessToken string) (conta
 		return
 	}
 	url := endpoints.EndpointContacts
-	b, err := json.Marshal(contactToCreate)
+	buf, err := helpers.MarshallJsonToBuffer(contactToCreate)
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	var request *http.Request
-	request, err = http.NewRequest("POST", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
 		return
 	}
 	var responseBody struct {
 		Contacts []Contact
 	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	if err != nil {
 		return
 	}
@@ -184,34 +140,23 @@ func UpdateContact(contact Contact, tenantId, accessToken string) (err error) {
 		return ErrInvalidContactForUpdating
 	}
 	url := endpoints.EndpointContacts
-	b, err := json.Marshal(contact)
+	buf, err := helpers.MarshallJsonToBuffer(contact)
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	var request *http.Request
-	request, err = http.NewRequest("POST", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
 	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		err = errors.New(string(b))
 		return
 	}
 	var responseBody struct {
 		Contacts []Contact
 	}
-	err = json.Unmarshal(b, &responseBody)
+	err = helpers.UnmarshalJson(body, &responseBody)
 	return
 }
 
@@ -226,27 +171,18 @@ func ArchiveContact(contactId, tenantId, accessToken string) (err error) {
 	}
 	requestBody.ContactID = contactId
 	requestBody.ContactStatus = string(ContactStatusArchived)
-	b, err := json.Marshal(requestBody)
+	buf, err := helpers.MarshallJsonToBuffer(requestBody)
 	if err != nil {
 		return
 	}
-	buf := bytes.NewBuffer(b)
-	request, err := http.NewRequest("POST", url, buf)
+	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
-	utils.AddXeroHeaders(request, accessToken, tenantId)
-	response, err := http.DefaultClient.Do(request)
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	_, err = helpers.DoRequest(request, 200)
 	if err != nil {
 		return
-	}
-	defer response.Body.Close()
-	b, err = io.ReadAll(response.Body)
-	if err != nil {
-		return
-	}
-	if response.StatusCode != 200 {
-		return errors.New(string(b))
 	}
 	return
 }

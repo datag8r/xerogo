@@ -7,6 +7,8 @@ import (
 
 	"github.com/datag8r/xerogo/accountingAPI/accounts"
 	"github.com/datag8r/xerogo/accountingAPI/contacts"
+	"github.com/datag8r/xerogo/accountingAPI/endpoints"
+	"github.com/datag8r/xerogo/accountingAPI/history"
 	"github.com/datag8r/xerogo/accountingAPI/items"
 	"github.com/datag8r/xerogo/accountingAPI/pagination"
 	"github.com/datag8r/xerogo/accountingAPI/users"
@@ -113,13 +115,13 @@ func (t *tenant) GetItem(itemIdOrCode string) (item items.Item, err error) {
 	return items.GetItem(itemIdOrCode, t.TenantID, t.c.AccessToken)
 }
 
-func (t *tenant) GetItemHistory(itemIdOrCode string) (history []items.ItemHistory, err error) {
+func (t *tenant) GetItemHistory(itemIdOrCode string) (historyList []history.History, err error) {
 	err = t.c.Refresh()
 	if err != nil {
 		return
 	}
 	t.Call()
-	return items.GetItemHistory(itemIdOrCode, t.TenantID, t.c.AccessToken)
+	return history.GetResourceHistory(endpoints.EndpointItems, itemIdOrCode, t.TenantID, t.c.AccessToken)
 }
 
 func (t *tenant) CreateItem(itemToCreate items.Item) (item items.Item, err error) {
@@ -155,7 +157,7 @@ func (t *tenant) AddNoteToItem(itemIdOrCode, note string) (err error) {
 		return
 	}
 	t.Call()
-	return items.AddNoteToItem(itemIdOrCode, note, t.TenantID, t.c.AccessToken)
+	return history.AddNoteToResource(endpoints.EndpointItems, itemIdOrCode, note, t.TenantID, t.c.AccessToken)
 }
 
 // Contacts

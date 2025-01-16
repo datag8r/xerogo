@@ -20,6 +20,14 @@ func NewFilter(modifiedAfter *time.Time, orderBy *orderBy, opts ...whereOpt) *Fi
 	return f
 }
 
+func (f *Filter) AddPagination(page uint, pageSize uint) {
+	opts := []whereOpt{
+		WhereFieldContains("page", []string{fmt.Sprint(page)}),
+		WhereFieldContains("pageSize", []string{fmt.Sprint(pageSize)}),
+	}
+	f.where = append(f.where, opts...)
+}
+
 func (f *Filter) BuildRequest(method, url string, body io.Reader) (req *http.Request, err error) {
 	req, err = http.NewRequest(method, f.buildUrl(url), body)
 	if err != nil {
