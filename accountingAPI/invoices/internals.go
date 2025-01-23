@@ -96,7 +96,7 @@ func (i Invoice) toUpdate() invoiceForUpdating {
 }
 
 func (i Invoice) validForCreation() bool {
-	if i.Type == "" || len(i.LineItems) == 0 || i.Contact.IsZero() {
+	if i.Type == "" || len(i.LineItems) == 0 {
 		return false
 	}
 	return true

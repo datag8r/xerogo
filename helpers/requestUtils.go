@@ -17,7 +17,7 @@ func BuildRequest(method, url string, page *uint, where *filter.Filter, body io.
 		if page != nil {
 			where.AddPagination(*page, pagination.CustomPageSize)
 		}
-		request, err = where.BuildRequest("GET", url, nil)
+		request, err = where.BuildRequest(method, url, body)
 	} else {
 		if page != nil {
 			url += "?page=" + fmt.Sprint(*page)
@@ -25,7 +25,7 @@ func BuildRequest(method, url string, page *uint, where *filter.Filter, body io.
 				url += "&pageSize=" + fmt.Sprint(pagination.CustomPageSize)
 			}
 		}
-		request, err = http.NewRequest("GET", url, nil)
+		request, err = http.NewRequest(method, url, body)
 	}
 	return
 }

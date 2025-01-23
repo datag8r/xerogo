@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/datag8r/xerogo/accountingAPI/currencies"
+	config "github.com/datag8r/xerogo/testing"
 )
 
 func TestGetCurrencies(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +23,7 @@ func TestGetCurrencies(t *testing.T) {
 }
 
 func TestAddCurrency(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -2,58 +2,56 @@ package contacts
 
 import (
 	brandingthemes "github.com/datag8r/xerogo/accountingAPI/brandingThemes"
+	contactgroups "github.com/datag8r/xerogo/accountingAPI/contactGroups"
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"github.com/datag8r/xerogo/accountingAPI/pagination"
 	trackingcategories "github.com/datag8r/xerogo/accountingAPI/trackingCategories"
 	"github.com/datag8r/xerogo/filter"
 	"github.com/datag8r/xerogo/helpers"
+	"github.com/datag8r/xerogo/utils"
 )
 
 type Contact struct {
 	// Retreived On Multi Contact Get Requests
-	ContactID                 string           `json:",omitempty"`
-	ContactNumber             string           `json:",omitempty"`
-	AccountNumber             string           `json:",omitempty"`
-	ContactStatus             contactStatus    `json:",omitempty"`
-	Name                      string           `json:",omitempty"`
-	FirstName                 string           `json:",omitempty"`
-	LastName                  string           `json:",omitempty"`
-	EmailAddress              string           `json:",omitempty"`
-	BankAccountDetails        string           `json:",omitempty"`
-	CompanyNumber             string           `json:",omitempty"` // max length 50 char
-	TaxNumber                 string           `json:",omitempty"`
-	AccountsReceivableTaxType string           `json:",omitempty"` // will be taxType
-	AccountsPayableTaxType    string           `json:",omitempty"` // will be taxType
-	Addresses                 []addressDetails `json:",omitempty"`
-	Phones                    []phoneDetails   `json:",omitempty"`
-	IsSupplier                bool             `json:",omitempty"`
-	IsCustomer                bool             `json:",omitempty"`
-	DefaultCurrency           string           `json:",omitempty"`
-	UpdatedDateUTC            string           `json:",omitempty"`
+	ContactID                 string           `xero:"update,*id"`
+	Name                      string           `xero:"create,*update,*id"`
+	ContactNumber             string           `xero:"*create,*update"`
+	AccountNumber             string           `xero:"*create,*update"`
+	ContactStatus             contactStatus    `xero:"*create,*update"`
+	FirstName                 string           `xero:"*create,*update"`
+	LastName                  string           `xero:"*create,*update"`
+	EmailAddress              string           `xero:"*create,*update"`
+	BankAccountDetails        string           `xero:"*create,*update"`
+	CompanyNumber             string           `xero:"*create,*update"` // max length 50 char
+	TaxNumber                 string           `xero:"*create,*update"`
+	AccountsReceivableTaxType string           `xero:"*create,*update"` // will be taxType
+	AccountsPayableTaxType    string           `xero:"*create,*update"` // will be taxType
+	Addresses                 []addressDetails `xero:"*create,*update"`
+	Phones                    []phoneDetails   `xero:"*create,*update"`
+	IsSupplier                bool             `xero:"*create,*update"`
+	IsCustomer                bool             `xero:"*create,*update"`
+	DefaultCurrency           string           `xero:"*create,*update"`
+	UpdatedDateUTC            string           `xero:"*create,*update"`
 	// Only Retreived with pagination or single contact request
-	ContactPersons                 []ContactPerson                       `json:",omitempty"`
-	XeroNetworkKey                 string                                `json:",omitempty"`
-	MergedToContactID              string                                `json:",omitempty"`
-	SalesDefaultAccountCode        string                                `json:",omitempty"`
-	PurchaseDefaultAccountCode     string                                `json:",omitempty"`
-	SalesTrackingTCategories       []trackingcategories.TrackingCategory `json:",omitempty"`
-	PurchaseTrackingCategories     []trackingcategories.TrackingCategory `json:",omitempty"`
-	SalesDefaultLineAmountType     lineAmountType                        `json:",omitempty"`
-	PurchasesDefaultLineAmountType lineAmountType                        `json:",omitempty"`
-	TrackingCategoryName           string                                `json:",omitempty"`
-	TrackingOptionName             string                                `json:",omitempty"`
-	PaymentTerms                   paymentTerms                          `json:",omitempty"`
-	// ContactGroups                  ContactGroups
-	Website       string                       `json:",omitempty"`
-	BrandingTheme brandingthemes.BrandingTheme `json:",omitzero"`
+	ContactPersons                 []ContactPerson                       `xero:"*create,*update"`
+	XeroNetworkKey                 string                                `xero:"*create,*update"`
+	SalesDefaultAccountCode        string                                `xero:"*create,*update"`
+	PurchaseDefaultAccountCode     string                                `xero:"*create,*update"`
+	SalesTrackingTCategories       []trackingcategories.TrackingCategory `xero:"*create,*update"`
+	PurchaseTrackingCategories     []trackingcategories.TrackingCategory `xero:"*create,*update"`
+	TrackingCategoryName           string                                `xero:"*create,*update"`
+	TrackingOptionName             string                                `xero:"*create,*update"`
+	PaymentTerms                   paymentTerms                          `xero:"*create,*update"`
+	MergedToContactID              string
+	SalesDefaultLineAmountType     lineAmountType
+	PurchasesDefaultLineAmountType lineAmountType
+	ContactGroups                  []contactgroups.ContactGroup
+	Website                        string
+	BrandingTheme                  brandingthemes.BrandingTheme
 	// BatchPayments                  batchPaymentDetails // ??
-	Discount       string   `json:",omitempty"`
-	Balances       balances // idek
+	Discount       string
+	Balances       balances
 	HasAttachments bool
-}
-
-func (c Contact) IsZero() bool {
-	return c.ContactID == ""
 }
 
 // includeArchived
@@ -79,10 +77,6 @@ func GetContacts(tenantId, accessToken string, page *uint, where *filter.Filter)
 }
 
 func GetContact(tenantId, accessToken, contactIdOrNumber string) (contact Contact, err error) {
-	if contactIdOrNumber == "" {
-		err = ErrInvalidContactID
-		return
-	}
 	url := endpoints.EndpointContacts + "/" + contactIdOrNumber
 	request, err := helpers.BuildRequest("GET", url, nil, nil, nil)
 	if err != nil {
@@ -104,16 +98,12 @@ func GetContact(tenantId, accessToken, contactIdOrNumber string) (contact Contac
 }
 
 func CreateContact(contactToCreate Contact, tenantId, accessToken string) (contact Contact, err error) {
-	if contactToCreate.Name == "" {
-		err = ErrInvalidContactForCreation
-		return
-	}
 	url := endpoints.EndpointContacts
 	buf, err := helpers.MarshallJsonToBuffer(contactToCreate)
 	if err != nil {
 		return
 	}
-	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
+	request, err := helpers.BuildRequest("POST", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
@@ -135,16 +125,72 @@ func CreateContact(contactToCreate Contact, tenantId, accessToken string) (conta
 	return
 }
 
-func UpdateContact(contact Contact, tenantId, accessToken string) (err error) {
-	if contact.ContactID == "" {
-		return ErrInvalidContactForUpdating
-	}
+func CreateContacts(contactsToCreate []Contact, tenantId, accessToken string) (contacts []Contact, err error) {
 	url := endpoints.EndpointContacts
-	buf, err := helpers.MarshallJsonToBuffer(contact)
+	iter, err := utils.XeroCustomMarshal(contactsToCreate, "create")
 	if err != nil {
 		return
 	}
-	request, err := helpers.BuildRequest("PUT", url, nil, nil, buf)
+	var requestBody = map[string]interface{}{"Contacts": iter}
+	buf, err := helpers.MarshallJsonToBuffer(requestBody)
+	if err != nil {
+		return
+	}
+	request, err := helpers.BuildRequest("POST", url, nil, nil, buf)
+	if err != nil {
+		return
+	}
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
+	if err != nil {
+		return
+	}
+	var responseBody struct {
+		Contacts []Contact
+	}
+	err = helpers.UnmarshalJson(body, &responseBody)
+	contacts = responseBody.Contacts
+	return
+}
+
+func UpdateContact(contact Contact, tenantId, accessToken string) (err error) {
+	url := endpoints.EndpointContacts
+	iter, err := utils.XeroCustomMarshal(contact, "update")
+	if err != nil {
+		return
+	}
+	buf, err := helpers.MarshallJsonToBuffer(iter)
+	if err != nil {
+		return
+	}
+	request, err := helpers.BuildRequest("POST", url, nil, nil, buf)
+	if err != nil {
+		return
+	}
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	body, err := helpers.DoRequest(request, 200)
+	if err != nil {
+		return
+	}
+	var responseBody struct {
+		Contacts []Contact
+	}
+	err = helpers.UnmarshalJson(body, &responseBody)
+	return
+}
+
+func UpdateContacts(contacts []Contact, tenantId, accessToken string) (err error) {
+	url := endpoints.EndpointContacts
+	iter, err := utils.XeroCustomMarshal(contacts, "update")
+	if err != nil {
+		return
+	}
+	var requestBody = map[string]interface{}{"Contacts": iter}
+	buf, err := helpers.MarshallJsonToBuffer(requestBody)
+	if err != nil {
+		return
+	}
+	request, err := helpers.BuildRequest("POST", url, nil, nil, buf)
 	if err != nil {
 		return
 	}
@@ -161,9 +207,6 @@ func UpdateContact(contact Contact, tenantId, accessToken string) (err error) {
 }
 
 func ArchiveContact(contactId, tenantId, accessToken string) (err error) {
-	if contactId == "" {
-		return ErrInvalidContactID
-	}
 	url := endpoints.EndpointContacts
 	var requestBody struct {
 		ContactID     string
@@ -187,5 +230,29 @@ func ArchiveContact(contactId, tenantId, accessToken string) (err error) {
 	return
 }
 
-// summaryOnly
-// searchTerm
+func ArchiveContacts(contactIds []string, tenantId, accessToken string) (err error) {
+	url := endpoints.EndpointContacts
+	var requestBody = map[string][]map[string]string{
+		"Contacts": {},
+	}
+	for _, id := range contactIds {
+		requestBody["Contacts"] = append(requestBody["Contacts"], map[string]string{
+			"ContactID":     id,
+			"ContactStatus": string(ContactStatusArchived),
+		})
+	}
+	buf, err := helpers.MarshallJsonToBuffer(requestBody)
+	if err != nil {
+		return
+	}
+	request, err := helpers.BuildRequest("POST", url, nil, nil, buf)
+	if err != nil {
+		return
+	}
+	helpers.AddXeroHeaders(request, accessToken, tenantId)
+	_, err = helpers.DoRequest(request, 200)
+	if err != nil {
+		return
+	}
+	return
+}

@@ -1,19 +1,14 @@
 package accounting_test
 
 import (
-	"encoding/json"
-	"errors"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/datag8r/xerogo/accountingAPI/accounts"
-	"github.com/datag8r/xerogo/auth"
-	"github.com/datag8r/xerogo/utils"
+	config "github.com/datag8r/xerogo/testing"
 )
 
 func TestGetAccounts(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,9 +20,22 @@ func TestGetAccounts(t *testing.T) {
 		t.Fatal("len of accs is 0")
 	}
 }
+func TestGetAccount(t *testing.T) {
+	conf, token, err := config.Setup(2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	acc, err := accounts.GetAccount("bd9e85e0-0478-433d-ae9f-0b3c4f04bfe4", conf.TenantID, token.AccessToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if acc.AccountID == "" {
+		t.Fatal("Account ID Field Empty")
+	}
+}
 
 func TestUpdateAccount(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +72,7 @@ func TestUpdateAccount(t *testing.T) {
 }
 
 func TestCreateAccount(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,89 +84,4 @@ func TestCreateAccount(t *testing.T) {
 	if a.AccountID == "" {
 		t.Fatal("Account ID Field Empty after creation")
 	}
-}
-
-type testConfig struct {
-	ClientID     string   `json:"clientID"`
-	ClientSecret string   `json:"clientSecret"`
-	Scopes       []string `json:"scopes"`
-	RedirectURI  string   `json:"redirectURI"`
-	TenantID     string   `json:"tenantID"`
-}
-
-type tokenData struct {
-	IdentityToken   string    `json:"identity_token"`
-	AccessToken     string    `json:"access_token"`
-	RefreshToken    string    `json:"refresh_token"`
-	TimeLastUpdated time.Time `json:"time_last_updated"`
-}
-
-func loadConfig() (conf testConfig, err error) {
-	path := utils.PathToMinus("test_config.json", 2)
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &conf)
-	return
-}
-
-func saveTokenData(t tokenData) error {
-	path := utils.PathToMinus("tokens.json", 2)
-	b, err := json.Marshal(t)
-	if err != nil {
-		return err
-	}
-	err = os.WriteFile(path, b, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func loadTokenData() (t tokenData, err error) {
-	path := utils.PathToMinus("tokens.json", 2)
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &t)
-	return
-}
-
-func setup() (conf testConfig, token tokenData, err error) {
-	conf, err = loadConfig()
-	if err != nil {
-		return
-	}
-	token, err = loadTokenData()
-	if err != nil {
-		return
-	}
-	if token.AccessToken == "" {
-		err = errors.New("Empty Access Token")
-		return
-	}
-	if token.RefreshToken == "" {
-		err = errors.New("Empty Refresh Token")
-		return
-	}
-	if token.TimeLastUpdated.IsZero() {
-		err = errors.New("TimeLastUpdate IsZero")
-		return
-	}
-	if time.Since(token.TimeLastUpdated) > (time.Hour*24)*60 {
-		err = errors.New("Expired Refresh Token")
-		return
-	}
-	id, access, refresh, err := auth.RefreshToken(conf.ClientID, conf.ClientSecret, token.RefreshToken)
-	if err != nil {
-		return
-	}
-	token.IdentityToken = id
-	token.AccessToken = access
-	token.RefreshToken = refresh
-	token.TimeLastUpdated = time.Now()
-	err = saveTokenData(token)
-	return
 }

@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/datag8r/xerogo/accountingAPI/contacts"
+	config "github.com/datag8r/xerogo/testing"
 )
 
 func TestGetContacts(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +27,7 @@ func TestGetContacts(t *testing.T) {
 }
 
 func TestGetContactsWithPagination(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func TestGetContactsWithPagination(t *testing.T) {
 }
 
 func TestGetContact(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +78,7 @@ func TestGetContact(t *testing.T) {
 }
 
 func TestCreateContact(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +94,7 @@ func TestCreateContact(t *testing.T) {
 }
 
 func TestUpdateContact(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +108,7 @@ func TestUpdateContact(t *testing.T) {
 }
 
 func TestArchiveContact(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}

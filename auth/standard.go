@@ -39,7 +39,6 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
 	data.Set("redirect_uri", redirectURI)
-
 	request, err := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
 	if err != nil {
 		return
@@ -78,11 +77,9 @@ func ExchangeCode(code, clientID, clientSecret, redirectURI string) (identityTok
 func RefreshToken(clientId, clientSecret, RefreshToken string) (identityToken, accessToken, refreshToken string, err error) {
 	url := endpoints.EndpointToken
 	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(clientId+":"+clientSecret))
-
 	data := netUrl.Values{}
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", RefreshToken)
-
 	request, err := http.NewRequest("POST", url, strings.NewReader(data.Encode()))
 	if err != nil {
 		return

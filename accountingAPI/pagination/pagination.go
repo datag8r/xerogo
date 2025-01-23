@@ -1,5 +1,7 @@
 package pagination
 
+import "cmp"
+
 type PaginationData struct {
 	Page      uint `json:"page"`
 	PageSize  uint `json:"pageSize"`
@@ -7,16 +9,22 @@ type PaginationData struct {
 	ItemCount uint `json:"itemCount"`
 }
 
-var DefaultPageSize uint = 100
-var maxPageSize uint = 1000
+const (
+	DefaultPageSize uint = 100
+	maxPageSize     uint = 1000
+)
 
 var CustomPageSize uint = 100
 
 // 1 - 1000
 func SetPageSize(size uint) {
-	CustomPageSize = min(size, maxPageSize)
+	CustomPageSize = clamp(1, size, maxPageSize)
 }
 
 func IsDefaultPageSize() bool {
 	return CustomPageSize == DefaultPageSize
+}
+
+func clamp[T cmp.Ordered](minimum, actual, maximum T) T {
+	return max(minimum, min(actual, maximum))
 }

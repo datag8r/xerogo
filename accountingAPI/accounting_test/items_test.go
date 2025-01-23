@@ -6,10 +6,11 @@ import (
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
 	"github.com/datag8r/xerogo/accountingAPI/history"
 	"github.com/datag8r/xerogo/accountingAPI/items"
+	config "github.com/datag8r/xerogo/testing"
 )
 
 func TestGetItems(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,7 +24,7 @@ func TestGetItems(t *testing.T) {
 }
 
 func TestGetItem(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,7 +38,7 @@ func TestGetItem(t *testing.T) {
 }
 
 func TestGetItemHistory(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,7 +55,7 @@ func TestCreateItem(t *testing.T) {
 	i := items.Item{
 		Code: "TESTItemCode",
 	}
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +73,7 @@ func TestUpdateItem(t *testing.T) {
 		Code: "TESTItemCode",
 		Name: "Updated name TEST",
 	}
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +84,7 @@ func TestUpdateItem(t *testing.T) {
 }
 
 func TestDeleteItem(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,7 +95,7 @@ func TestDeleteItem(t *testing.T) {
 }
 
 func TestAddNoteToItem(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}

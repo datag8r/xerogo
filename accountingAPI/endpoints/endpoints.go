@@ -10,5 +10,6 @@ const (
 	EndpointCurrencies              = accountingAPIBase + "/Currencies"
 	EndpointContactGroups           = accountingAPIBase + "/ContactGroups"
 	EndpointBankTransfers           = accountingAPIBase + "/BankTransfers"
+	EndpointBrandingThemes          = accountingAPIBase + "/BrandingThemes"
 	EndpointBankTransactions        = accountingAPIBase + "/BankTransactions"
 )

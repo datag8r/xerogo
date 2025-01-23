@@ -14,7 +14,7 @@ import (
 	"github.com/datag8r/xerogo/utils"
 )
 
-type client struct {
+type Client struct {
 	clientID      string
 	clientSecret  string
 	redirectURI   string
@@ -23,17 +23,17 @@ type client struct {
 	refreshToken  string // Expiry: 60 days
 	identityToken string // Expiry: 5 minutes
 	lastRefresh   time.Time
-	Tenants       []*tenant
+	Tenants       []*Tenant
 	rateLimit     time.Duration `json:"-"`
 	lastCall      time.Time     `json:"-"`
 	rateMutex     sync.Mutex    `json:"-"`
 }
 
-// NewClient creates a new client object
+// NewClient creates a new Client object
 // redirectURI is the URL that the user will be redirected to after authenticating with Xero -- This must be an https address, however for testing you can use http://localhost/ Please note that http://127.0.0.1 cannot be used
 // scope is a list of the permissions that your app will need to access -- https://developer.xero.com/documentation/guides/oauth2/scopes/
-func NewClient(clientID string, clientSecret string, redirectURI string, scope []string) *client {
-	return &client{
+func NewClient(clientID string, clientSecret string, redirectURI string, scope []string) *Client {
+	return &Client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
 		redirectURI:  redirectURI,
@@ -49,7 +49,7 @@ type tokenData struct {
 	TimeLastUpdated time.Time `json:"time_last_updated"`
 }
 
-func (c *client) SaveTokenDataToJsonFile(filePath string) (err error) {
+func (c *Client) SaveTokenDataToJsonFile(filePath string) (err error) {
 	path := utils.PathTo(filePath)
 	var t tokenData = tokenData{
 		IdentityToken:   c.identityToken,
@@ -65,7 +65,7 @@ func (c *client) SaveTokenDataToJsonFile(filePath string) (err error) {
 	return
 }
 
-func (c *client) LoadTokenDataFromJsonFile(filePath string) (err error) {
+func (c *Client) LoadTokenDataFromJsonFile(filePath string) (err error) {
 	path := utils.PathTo(filePath)
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -83,13 +83,13 @@ func (c *client) LoadTokenDataFromJsonFile(filePath string) (err error) {
 	return
 }
 
-func (c *client) GetStandardAuthRedirectURL() (url string, state string) {
+func (c *Client) GetStandardAuthRedirectURL() (url string, state string) {
 	state = fmt.Sprintf("%d", rand.Int31n(1000))
 	url = auth.NewAuthRedirectUrl("code", c.clientID, c.redirectURI, c.scope, state)
 	return
 }
 
-func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState string) (err error) {
+func (c *Client) VerifyStandardAuthRedirectCode(code, state, expectedState string) (err error) {
 	c.Call()
 	if state != expectedState {
 		return auth.ErrMisMatchedState
@@ -108,7 +108,7 @@ func (c *client) VerifyStandardAuthRedirectCode(code, state, expectedState strin
 	return
 }
 
-func (c *client) Refresh() error {
+func (c *Client) Refresh() error {
 	if c.requiresRefresh() {
 		c.Call()
 		return c.refreshTokens()
@@ -116,7 +116,7 @@ func (c *client) Refresh() error {
 	return nil
 }
 
-func (c *client) refreshTokens() (err error) {
+func (c *Client) refreshTokens() (err error) {
 	if c.refreshToken == "" {
 		return auth.ErrOfflineAccessNotEnabled
 	}
@@ -131,11 +131,11 @@ func (c *client) refreshTokens() (err error) {
 	return
 }
 
-func (c *client) requiresRefresh() bool {
+func (c *Client) requiresRefresh() bool {
 	return time.Since(c.lastRefresh) > 30*time.Minute
 }
 
-func (c *client) GetTenants() (t []*tenant, err error) {
+func (c *Client) GetTenants() (t []*Tenant, err error) {
 	err = c.Refresh()
 	if err != nil {
 		return
@@ -143,7 +143,16 @@ func (c *client) GetTenants() (t []*tenant, err error) {
 	return c.getTenants()
 }
 
-func (c *client) getTenants() (t []*tenant, err error) {
+func (c *Client) GetTenant(tenantId string) (t *Tenant, err error) {
+	err = c.Refresh()
+	if err != nil {
+		return
+	}
+	return c.getTenant(tenantId)
+}
+
+// impl get tenant (single tenant)
+func (c *Client) getTenants() (t []*Tenant, err error) {
 	c.Call()
 	url := "https://api.xero.com/connections"
 	request, err := http.NewRequest("GET", url, nil)
@@ -164,7 +173,8 @@ func (c *client) getTenants() (t []*tenant, err error) {
 	err = json.Unmarshal(b, &t)
 	if err == nil {
 		for _, ten := range t {
-			ten.c = c
+			ten.Client = c
+			ten.tenantEndpoints = NewTenantEndpoints(ten)
 			ten.rateLimit = time.Second
 			ten.lastCall = time.Now()
 		}
@@ -173,9 +183,44 @@ func (c *client) getTenants() (t []*tenant, err error) {
 	return
 }
 
+func (c *Client) getTenant(tenantId string) (tenant *Tenant, err error) {
+	c.Call()
+	url := "https://api.xero.com/connections"
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+	request.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.AccessToken))
+	request.Header.Add("Content-Type", "application/json")
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	b, err := io.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+	t := []*Tenant{}
+	err = json.Unmarshal(b, &t)
+	if err == nil {
+		for _, ten := range t {
+			ten.Client = c
+			ten.tenantEndpoints = NewTenantEndpoints(ten)
+			ten.rateLimit = time.Second
+			ten.lastCall = time.Now()
+			if ten.TenantID == tenantId {
+				tenant = ten
+			}
+		}
+		c.Tenants = t
+	}
+	return
+}
+
 // This Function is Used For Rate Limiting, To avoid being rate lmited you should call this before every request
-// Built In (*tenant) and (*client) Methods Call This For you
-func (c *client) Call() {
+// Built In (*Tenant) and (*Client) Methods Call This For you
+func (c *Client) Call() {
 	c.rateMutex.Lock()
 	next := c.lastCall.Add(c.rateLimit) // Min Time Of Next Call
 	current := time.Now()

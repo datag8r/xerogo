@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	contactgroups "github.com/datag8r/xerogo/accountingAPI/contactGroups"
+	config "github.com/datag8r/xerogo/testing"
 )
 
 func TestGetContactGroups(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,7 +21,7 @@ func TestGetContactGroups(t *testing.T) {
 	}
 }
 func TestGetContactGroup(t *testing.T) {
-	conf, token, err := setup()
+	conf, token, err := config.Setup(2)
 	if err != nil {
 		t.Fatal(err)
 	}
