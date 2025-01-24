@@ -1,39 +1,14 @@
 package items
 
 type PurchaseDetails struct {
-	UnitPrice       float64
-	AccountCode     string
-	TaxType         string  // Will be taxType when I make them
-	COGSAccountCode *string // TODO
+	UnitPrice       float64 `xero:"create,update"`
+	AccountCode     string  `xero:"create,update"`
+	TaxType         string  `xero:"*create,*update"` // Will be taxType when I make them
+	COGSAccountCode string  `xero:"*create,*update"`
 }
 
 type SalesDetails struct {
-	UnitPrice   float64
-	AccountCode string
-	TaxType     string // Will be taxType when I make them
-}
-
-type itemForCreate struct {
-	Code                      string
-	InventoryAssetAccountCode *string `json:",omitempty"`
-	Name                      string  `json:",omitempty"`
-	IsSold                    bool
-	IsPurchased               bool
-	Description               string           `json:",omitempty"`
-	PurchaseDescription       string           `json:",omitempty"`
-	PurchaseDetails           *PurchaseDetails `json:",omitempty"`
-	SalesDetails              *SalesDetails    `json:",omitempty"`
-}
-
-type itemForUpdate struct {
-	ItemID                    string `json:",omitempty"`
-	Code                      string
-	InventoryAssetAccountCode *string `json:",omitempty"`
-	Name                      string  `json:",omitempty"`
-	IsSold                    bool
-	IsPurchased               bool
-	Description               string           `json:",omitempty"`
-	PurchaseDescription       string           `json:",omitempty"`
-	PurchaseDetails           *PurchaseDetails `json:",omitempty"`
-	SalesDetails              *SalesDetails    `json:",omitempty"`
+	UnitPrice   float64 `xero:"create,update"`
+	AccountCode string  `xero:"create,update"`
+	TaxType     string  `xero:"*create,*update"` // Will be taxType when I make them
 }

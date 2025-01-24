@@ -28,8 +28,12 @@ func TestAddCurrency(t *testing.T) {
 		t.Fatal(err)
 	}
 	currencyCode := "SGD"
-	err = currencies.AddCurrency(conf.TenantID, token.AccessToken, currencyCode)
+	cur := currencies.Currency{Code: currencyCode}
+	cur, err = currencies.CreateCurrency(conf.TenantID, token.AccessToken, cur)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if cur.Code != currencyCode {
+		t.Fatal("currency code mismatch")
 	}
 }

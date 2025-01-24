@@ -36,7 +36,7 @@ func (e *contactsEndpoint) GetMulti(where *filter.Filter) (contacts []Contact, e
 		// rate limit handling
 		e.RateLimitCallback()
 		// actual fetching
-		c, pData, err := GetContacts(e.tenantId, e.accessToken, &currentPage, nil)
+		c, pData, err := GetContacts(e.tenantId, e.accessToken, &currentPage, where)
 		if err != nil {
 			return nil, err
 		}

@@ -7,10 +7,10 @@ type TrackingCategory struct {
 	Options            []TrackingOption
 }
 
-type TrackingOption struct {
-	TrackingOptionID string
-	Name             string
-	Status           string // ? | probs ACTIVE / ARCHIVED
+type Tracking struct {
+	Name               string `xero:"create,update"`
+	Option             string `xero:"create,update"`
+	TrackingCategoryID string
 }
 
 func GetTrackingCategories()   {}
@@ -19,10 +19,3 @@ func UpdateTrackingCategory()  {}
 func CreateTrackingCategory()  {}
 func ArchiveTrackingCategory() {}
 func DeleteTrackingCategory()  {}
-
-func GetTrackingOptions()    {}
-func GetTrackingOption()     {}
-func UpdateTrackingOption()  {}
-func CreateTrackingOption()  {}
-func ArchiveTrackingOption() {}
-func DeleteTrackingOption()  {}

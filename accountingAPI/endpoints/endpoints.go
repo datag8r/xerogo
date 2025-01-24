@@ -7,9 +7,11 @@ const (
 	EndpointAccounts                = accountingAPIBase + "/Accounts"
 	EndpointInvoices                = accountingAPIBase + "/Invoices"
 	EndpointContacts                = accountingAPIBase + "/Contacts"
+	EndpointEmployees               = accountingAPIBase + "/Employees"
 	EndpointCurrencies              = accountingAPIBase + "/Currencies"
 	EndpointContactGroups           = accountingAPIBase + "/ContactGroups"
 	EndpointBankTransfers           = accountingAPIBase + "/BankTransfers"
+	EndpointBatchPayments           = accountingAPIBase + "/BatchPayments"
 	EndpointBrandingThemes          = accountingAPIBase + "/BrandingThemes"
 	EndpointBankTransactions        = accountingAPIBase + "/BankTransactions"
 )

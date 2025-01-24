@@ -59,7 +59,7 @@ func TestCreateItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	i, err = items.CreateItem(i, conf.TenantID, token.AccessToken)
+	i, err = items.CreateItem(conf.TenantID, token.AccessToken, i)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestUpdateItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = items.UpdateItem(i, conf.TenantID, token.AccessToken)
+	err = items.UpdateItem(conf.TenantID, token.AccessToken, i)
 	if err != nil {
 		t.Fatal(err)
 	}

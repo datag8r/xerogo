@@ -33,6 +33,22 @@ const (
 	BankAccountTypeCreditCard bankAccountType = "CREDITCARD"
 	BankAccountTypePaypal     bankAccountType = "PAYPAL"
 
-	SystemAccountTypeAccountsReceivable systemAccountType = "DEBTORS"
-	// More of these
+	SystemAccountTypeAccountsReceivable      systemAccountType = "DEBTORS"
+	SystemAccountTypeAccountsPayable         systemAccountType = "CREDITORS"
+	SystemAccountTypeBankRevaluations        systemAccountType = "BANKCURRENCYGAIN"
+	SystemAccountTypeCISAssets               systemAccountType = "CISASSETS"        // UK Only
+	SystemAccountTypeCISLabourExpense        systemAccountType = "CISLABOUREXPENSE" // UK Only
+	SystemAccountTypeCISLabourIncome         systemAccountType = "CISLABOURINCOME"  // UK Only
+	SystemAccountTypeCISLiability            systemAccountType = "CISLIABILITY"     // UK Only
+	SystemAccountTypeCISMaterials            systemAccountType = "CISMATERIALS"     // UK Only
+	SystemAccountTypeGST                     systemAccountType = "GST"
+	SystemAccountTypeGSTOnImports            systemAccountType = "GSTONIMPORTS"
+	SystemAccountTypeHistoricalAdjustment    systemAccountType = "HISTORICAL"
+	SystemAccountTypeRealisedCurrencyGains   systemAccountType = "REALISEDCURRENCYGAIN"
+	SystemAccountTypeRetainedEarnings        systemAccountType = "RETAINEDEARNINGS"
+	SystemAccountTypeRounding                systemAccountType = "ROUNDING"
+	SystemAccountTypeTrackingTransfers       systemAccountType = "TRACKINGTRANSFERS"
+	SystemAccountTypeUnpaidExpenseClaims     systemAccountType = "UNPAIDEXPCLM"
+	SystemAccountTypeUnrealisedCurrencyGains systemAccountType = "UNREALISEDCURRENCYGAIN"
+	SystemAccountTypeWagesPayable            systemAccountType = "WAGEPAYABLES"
 )

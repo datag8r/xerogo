@@ -2,48 +2,53 @@ package invoices
 
 import (
 	"github.com/datag8r/xerogo/accountingAPI/contacts"
+	creditnotes "github.com/datag8r/xerogo/accountingAPI/creditNotes"
 	"github.com/datag8r/xerogo/accountingAPI/currencies"
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
+	"github.com/datag8r/xerogo/accountingAPI/overpayments"
+	"github.com/datag8r/xerogo/accountingAPI/payments"
+	"github.com/datag8r/xerogo/accountingAPI/prepayments"
+	"github.com/datag8r/xerogo/accountingAPI/types"
 	"github.com/datag8r/xerogo/filter"
 	"github.com/datag8r/xerogo/helpers"
 )
 
 type Invoice struct {
-	Reference       string // ACCREC only
-	Type            invoiceType
-	Contact         contacts.Contact // only fills id and name without pagination or single resource request
+	InvoiceID       string                  `xero:"update,id"`
+	InvoiceNumber   string                  `xero:"*create,*update,id"`
+	Reference       string                  `xero:"*create,*update"` // ACCREC only
+	Type            invoiceType             `xero:"create"`
+	Contact         contacts.Contact        `xero:"create,embeddedId"` // only fills id and name without pagination or single resource request
+	DateString      string                  `xero:"*create,*update"`   // YYYY-MM-DD
+	DueDateString   string                  `xero:"*create,*update"`   // YYYY-MM-DD
+	Status          invoiceStatus           `xero:"*create,*update"`
+	LineAmountTypes types.LineAmountType    `xero:"*create,*update"`
+	CurrencyCode    currencies.CurrencyCode `xero:"*create,*update"`
+	SubTotal        float64                 `json:",string"`
+	TotalTax        float64                 `json:",string"`
+	Total           float64                 `json:",string"`
+	TotalDiscount   float64                 `json:",string"`
+	AmountDue       float64                 `json:",string"`
+	AmountCredited  float64                 `json:",string"`
+	AmountPaid      float64                 `json:",string"`
 	Date            string
-	DateString      string
 	DueDate         string
-	DueDateString   string
-	Status          invoiceStatus
-	LineAmountTypes lineAmountType
-	SubTotal        float64 `json:",string"`
-	TotalTax        float64 `json:",string"`
-	Total           float64 `json:",string"`
-	TotalDiscount   float64 `json:",string"`
 	UpdatedDateUTC  string
-	InvoiceID       string
-	InvoiceNumber   string
-	CurrencyCode    currencies.CurrencyCode
-	AmountCredited  float64 `json:",string"`
-	AmountDue       float64 `json:",string"`
-	AmountPaid      float64 `json:",string"`
 	// the following are only filled using pagination or single resource request
-	LineItems           []InvoiceLineItem
-	CurrencyRate        string //
-	BrandingThemeID     string `json:",omitempty"`
-	Url                 string
-	SentToContact       bool
-	ExpectedPaymentDate string
-	PlannedPaymentDate  string
-	HasAttachments      bool
-	RepeatingInvoiceID  string
-	// Payments []payment
-	// CreditNotes []creditNotes
-	// Prepayments []prepayment
-	// Overpayments []overpayment
-	CISDeduction                 float64 `json:",string"`
+	LineItems                    []InvoiceLineItem `xero:"create"`
+	CurrencyRate                 string            `xero:"*create,*update"`
+	BrandingThemeID              string            `xero:"*create,*update"`
+	Url                          string            `xero:"*create,*update"`
+	SentToContact                bool              `xero:"*create,*update"`
+	ExpectedPaymentDate          string            `xero:"*create,*update"`
+	PlannedPaymentDate           string            `xero:"*create,*update"`
+	HasAttachments               bool
+	RepeatingInvoiceID           string
+	Payments                     []payments.Payment
+	CreditNotes                  []creditnotes.CreditNote
+	Prepayments                  []prepayments.Prepayment
+	Overpayments                 []overpayments.Overpayment
+	CISDeduction                 float64
 	FullyPaidOnDate              string
 	SalesTaxCalclulationTypeCode taxCalculationtype
 }
@@ -88,11 +93,8 @@ func GetInvoice(invoiceId string, tenantId, accessToken string) (invoice Invoice
 
 func CreateInvoice(invoiceToCreate Invoice, tenantId string, accessToken string) (invoice Invoice, err error) {
 	url := endpoints.EndpointInvoices
-	if !invoiceToCreate.validForCreation() {
-		err = ErrInvalidInvoiceForCreation
-		return
-	}
-	buf, err := helpers.MarshallJsonToBuffer(invoiceToCreate.toCreate())
+
+	buf, err := helpers.MarshallJsonToBuffer(invoiceToCreate)
 	if err != nil {
 		return
 	}
@@ -120,11 +122,7 @@ func CreateInvoice(invoiceToCreate Invoice, tenantId string, accessToken string)
 
 func UpdateInvoice(invoice Invoice, tenantId string, accessToken string) (err error) {
 	url := endpoints.EndpointInvoices
-	if !invoice.validForUpdating() {
-		err = ErrInvalidInvoiceForUpdating
-		return
-	}
-	buf, err := helpers.MarshallJsonToBuffer(invoice.toUpdate())
+	buf, err := helpers.MarshallJsonToBuffer(invoice)
 	if err != nil {
 		return
 	}

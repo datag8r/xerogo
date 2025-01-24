@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/datag8r/xerogo/accountingAPI/pagination"
 	"github.com/datag8r/xerogo/filter"
+	"github.com/datag8r/xerogo/pagination"
 )
 
 func BuildRequest(method, url string, page *uint, where *filter.Filter, body io.Reader) (request *http.Request, err error) {

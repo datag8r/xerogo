@@ -1,0 +1,4 @@
+package banktransactions
+
+type bankTransactionType string
+type bankTransactionStatus string

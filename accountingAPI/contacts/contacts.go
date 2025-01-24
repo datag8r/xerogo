@@ -4,10 +4,10 @@ import (
 	brandingthemes "github.com/datag8r/xerogo/accountingAPI/brandingThemes"
 	contactgroups "github.com/datag8r/xerogo/accountingAPI/contactGroups"
 	"github.com/datag8r/xerogo/accountingAPI/endpoints"
-	"github.com/datag8r/xerogo/accountingAPI/pagination"
 	trackingcategories "github.com/datag8r/xerogo/accountingAPI/trackingCategories"
 	"github.com/datag8r/xerogo/filter"
 	"github.com/datag8r/xerogo/helpers"
+	"github.com/datag8r/xerogo/pagination"
 	"github.com/datag8r/xerogo/utils"
 )
 
@@ -37,8 +37,8 @@ type Contact struct {
 	XeroNetworkKey                 string                                `xero:"*create,*update"`
 	SalesDefaultAccountCode        string                                `xero:"*create,*update"`
 	PurchaseDefaultAccountCode     string                                `xero:"*create,*update"`
-	SalesTrackingTCategories       []trackingcategories.TrackingCategory `xero:"*create,*update"`
-	PurchaseTrackingCategories     []trackingcategories.TrackingCategory `xero:"*create,*update"`
+	SalesTrackingTCategories       []trackingcategories.TrackingCategory `xero:"*create,*update"` //
+	PurchaseTrackingCategories     []trackingcategories.TrackingCategory `xero:"*create,*update"` //
 	TrackingCategoryName           string                                `xero:"*create,*update"`
 	TrackingOptionName             string                                `xero:"*create,*update"`
 	PaymentTerms                   paymentTerms                          `xero:"*create,*update"`
